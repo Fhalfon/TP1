@@ -32,6 +32,9 @@ typedef struct abb_iter {
 	pila_t *pila;
 } abb_iter_t;
 
+
+
+
 /* *****************************************************************
  *                    Funciones auxiliares                         *
  * *****************************************************************/
@@ -178,6 +181,21 @@ static bool abb_nodo_in_order(abb_nodo_t *nodo, bool visitar(const char *, void 
         return true;
 }
 
+/* Recorre los nodos en post-order recursivamente, comunicando con el valor de retorno en cada llamado si debe seguir la recursión */
+static bool abb_nodo_post_order(abb_nodo_t *nodo, bool visitar(const char *, void *, void *), void *extra)
+{
+    if (!nodo)
+        return true; // Recorrió todo, porque no hay nada para recorrer
+    else if (!abb_nodo_post_order(nodo->izq,visitar,extra))
+        return false;// Si el subárbol izquierdo recibió false, devuelve false
+	else if (!abb_nodo_post_order(nodo->der,visitar,extra)) 
+        return false; // Si el subárbol derecho recibió false, devuelve false
+    else if (!visitar(nodo->clave,nodo->dato,extra))
+        return false; // Visita el nodo actual, comunica a las llamadas previas que deben terminar
+    else
+        return true;
+}
+
 /* Apila todos los nodos en in-order en una pila válida dada */
 static void apilar_nodos_in(pila_t *pila, abb_nodo_t *nodo)
 {
@@ -189,6 +207,30 @@ static void apilar_nodos_in(pila_t *pila, abb_nodo_t *nodo)
     apilar_nodos_in(pila, nodo->der);
     pila_apilar(pila, nodo);
     apilar_nodos_in(pila, nodo->izq);
+}
+
+/* Apila todos los nodos en post-order en una pila válida dada */
+static void apilar_nodos_post(pila_t *pila, abb_nodo_t *nodo)
+{
+    if (!nodo) {
+        return;
+    }
+    /* El orden en el que hay que apilar es el inverso al in-order
+     * por ser una pila. Primero todo el subarbol derecho y luego el izquierdo */
+    pila_apilar(pila, nodo);
+    apilar_nodos_post(pila, nodo->der);
+    apilar_nodos_post(pila, nodo->izq);
+}
+
+/* Funcion auxiliar que guarda los datos del arbol en un arreglo */
+static bool guardar_datos(const char *clave, void *dato, void *extra)
+{
+	static int i;
+	abb_item_t * items = extra;
+	items[i].valor = dato;
+	items[i].clave = clave;
+	i++;
+	return true;
 }
 
 /* *****************************************************************
@@ -273,6 +315,14 @@ void abb_destruir(abb_t *arbol)
 	free(arbol);
 }
 
+
+abb_item_t* abb_obtener_items(const abb_t* arbol){
+	int cant = abb_cantidad((abb_t*) arbol);
+	abb_item_t * items = calloc (cant,sizeof(abb_item_t));
+	abb_in_order((abb_t*)arbol,guardar_datos,items);
+	return items;
+}
+	
 /* *****************************************************************
  *                 Primitivas del iterador interno                 *
  * *****************************************************************/
@@ -282,6 +332,10 @@ void abb_in_order(abb_t *arbol, bool visitar(const char *, void *, void *), void
     abb_nodo_in_order(arbol->raiz,visitar,extra);
 }
 
+void abb_post_order(abb_t* arbol, bool (*visitar)(const char*, void*, void*), void* extra)
+{
+	abb_nodo_post_order(arbol->raiz,visitar,extra);
+}
 /* *****************************************************************
  *                 Primitivas del iterador externo                 *
  * *****************************************************************/
@@ -332,6 +386,58 @@ bool abb_iter_in_al_final(const abb_iter_t *iter)
 }
 
 void abb_iter_in_destruir(abb_iter_t *iter)
+{
+    if (!iter) return;
+	pila_destruir(iter->pila);
+	free(iter);
+}
+
+abb_iter_t*  abb_iter_post_crear(const abb_t* arbol)
+{
+	abb_iter_t *iter = malloc(sizeof(abb_iter_t));
+    pila_t *pila;
+
+	if (!iter) {
+	    return NULL;
+	}
+	pila = pila_crear();
+	if (!pila) {
+		free(iter);
+		return NULL;
+	}
+	iter->pila = pila;
+
+    /* Apila todos los nodos en post-order */
+    apilar_nodos_post(iter->pila, arbol->raiz);
+	return iter;
+}
+
+bool abb_iter_post_avanzar(abb_iter_t *iter)
+{
+	if (abb_iter_post_al_final(iter))	{
+		return false;
+	}
+	pila_desapilar(iter->pila);
+	return true;
+}
+
+const char *abb_iter_post_ver_actual(const abb_iter_t *iter)
+{
+    abb_nodo_t *tope;
+
+    if (abb_iter_in_al_final(iter)) {
+		return NULL;
+	}
+	tope = pila_ver_tope(iter->pila);
+	return tope->clave;
+}
+
+bool abb_iter_post_al_final(const abb_iter_t *iter)
+{
+	return pila_esta_vacia(iter->pila);
+}
+
+void abb_iter_post_destruir(abb_iter_t *iter)
 {
     if (!iter) return;
 	pila_destruir(iter->pila);

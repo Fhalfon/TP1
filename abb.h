@@ -16,6 +16,12 @@ typedef void (*abb_destruir_dato_t) (void *);
 
 typedef struct abb_iter abb_iter_t;
 
+typedef struct abb_item
+{
+    const char* clave;
+    void* valor;
+} abb_item_t;
+
 /* *****************************************************************
  *                 Primitivas del ABB                              *
  * *****************************************************************/
@@ -54,6 +60,10 @@ size_t abb_cantidad(abb_t *arbol);
 // Post: el ABB fue destruido.
 void abb_destruir(abb_t *arbol);
 
+// Pre: El ABB fue creado
+// Post: Devuelve un arreglo con todos los datos del árbol (claves y valores), ordenados por clave.
+abb_item_t* abb_obtener_items(const abb_t *);
+
 /* *****************************************************************
  *                 Primitivas del iterador interno                 *
  * *****************************************************************/
@@ -62,6 +72,11 @@ void abb_destruir(abb_t *arbol);
 // Post: recorre cada uno de los elementos del ABB
 // hasta que se termine o hasta que visitar devuelva false.
 void abb_in_order(abb_t *arbol, bool visitar(const char *, void *, void *), void *extra);
+
+// Pre: el ABB fue creado y visitar debe ser válida
+// Post: recorre cada uno de los elementos del ABB
+// hasta que se termine o hasta que visitar devuelva false.
+void abb_post_order(abb_t* arbol, bool (*visitar)(const char*, void*, void*), void* extra);
 
 /* *****************************************************************
  *                 Primitivas del iterador externo                 *
@@ -92,6 +107,31 @@ bool abb_iter_in_al_final(const abb_iter_t *iter);
 // Post: el iterador fue destruido.
 void abb_iter_in_destruir(abb_iter_t* iter);
 
+
+// Crea un iterador post-order del ABB.
+// Pre: el ABB fue creado.
+// Post: devuelve un iterador situado en el primer elemento.
+abb_iter_t*  abb_iter_post_crear(const abb_t* arbol);
+
+// Avanza el iterador al siguiente elemento del ABB según post-order.
+// Devuelve verdadero en caso de que pueda avanzar y falso en caso contrario.
+// Pre: el iterador fue creado.
+// Post: el iterador está situado un elemento más adelante.
+bool  abb_iter_post_avanzar(abb_iter_t* iter);
+
+// Devuelve la clave del elemento donde está situado el iterador.
+// Pre: el iterador fue creado.
+// Post: devuelve la clave de la posición actual o NULL si el iterador está al final.
+const char*  abb_iter_post_ver_actual(const abb_iter_t* iter);
+
+// Permite saber si el iterador se encuentra al final.
+// Pre: el iterador fue creado.
+// Post: devuelve verdadero en caso de que esté al final, falso en caso contrario.
+bool  abb_iter_post_al_final(const abb_iter_t* iter);
+
+// Destruye el iterador.
+// Post: el iterador fue destruido.
+void  abb_iter_post_destruir(abb_iter_t* iter);
 /* *****************************************************************
  *                 Pruebas de la implementación                    *
  * *****************************************************************/
