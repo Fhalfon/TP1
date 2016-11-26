@@ -32,11 +32,11 @@ static void guardar_en_hash(char * linea,hash_t * hash,cola_t * cola)
 {
 	char ** palabra = split(linea,' ');
 	    if (!hash_pertenece(hash,palabra[0])) {
-			hash_guardar(hash,palabra[0],NULL);
-			cola_encolar(cola,palabra[0]);
+	        hash_guardar(hash,palabra[0],NULL);
+		cola_encolar(cola,palabra[0]);
 		}
-		else
-		    free(palabra[0]);
+	    else
+		free(palabra[0]);
 	free(palabra);
 }
 	
@@ -83,9 +83,9 @@ int main ( int argc , char *argv[] ) {
 	else {
 		imprimir_ambos = false;
 		if (strcmp(argv[3],"-1") == 0) {
-			imprimir_palabras(cola1,hash2,imprimir_ambos);
+		    imprimir_palabras(cola1,hash2,imprimir_ambos);
 		}
-	    else if (strcmp(argv[3],"-2") == 0) {
+	        else if (strcmp(argv[3],"-2") == 0) {
 		    imprimir_palabras(cola2,hash1,imprimir_ambos);
 	    }	
 	}	
