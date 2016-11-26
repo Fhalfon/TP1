@@ -4,7 +4,9 @@
 #include <stdlib.h>
 #include "hash.h"
 #include "strutil.h"
+#include "cola.h"
 
+ 
 
 int main ( int argc , char *argv[] ) {
 	/* Verifico que el programa recibe un unico parametro de invocacion */
@@ -18,55 +20,59 @@ int main ( int argc , char *argv[] ) {
 		 printf("No existe el archivo\n");
 		 return -1;
 	}
-	
     hash_t * hash = hash_crear(NULL);
     if (!hash) {
 		return -1;
 	}
-	/*Guardo la primera linea del archivo*/
-	char* linea = NULL;
-	size_t capacidad = 0;
-	ssize_t longitud; 
-	longitud = getline(&linea, &capacidad, arch);
-	if(longitud!=-1) {
-        linea[longitud-1] = 0;
+    /*Guardo la primera linea del archivo*/
+    char* linea = NULL;
+    size_t capacidad = 0;
+    ssize_t longitud; 
+    longitud = getline(&linea, &capacidad, arch);
+    if(longitud!=-1) {
+       linea[longitud-1] = 0;
     }
     /*Separo la linea en un arreglo dinamico terminado en NULL, pasando ' ' como separador*/
     char ** arreglo = split(linea,' ');
+    /* Creo una cola para guardar las palabras que aparecen en el texto*/
+    cola_t * cola = cola_crear();
     int i;
+    size_t * cont;
     while (!feof(arch)) {
 		for (i=0 ; arreglo[i] ; i++){
-			size_t * cont = malloc(sizeof(size_t));
-			* cont = 1;
+			/* Si la palabra no se encuentra en el hash, la guardo y la tambien la encolo*/
 		    if (!hash_pertenece(hash,arreglo[i])) {
+				cont = malloc(sizeof(size_t));
+				* cont = 1;
 			    hash_guardar(hash,arreglo[i],cont);
+			    cola_encolar(cola,arreglo[i]);
 		    }
+		    /* Si ya esta en el hash, obtengo el cont ,lo incremento y vuelvo a guardar */
 		    else {
 			    cont = hash_obtener(hash,arreglo[i]);
 			    ++*cont;
 			    hash_guardar(hash,arreglo[i],cont);
+			    free(arreglo[i]);
 		    }
 		}
+		free(arreglo);
 		longitud = getline(&linea, &capacidad, arch);
 		if(longitud!=-1) {
-            linea[longitud-1] = 0;
-        }
-        arreglo = split(linea,' ');
+                    linea[longitud-1] = 0;
+                    arreglo = split(linea,' ');
+                }
 	}
-	/* Creo un iterador para recorrer el hash */
-	hash_iter_t* iter = hash_iter_crear(hash);
-	const char * palabra;
-	while (!hash_iter_al_final(iter)) {
-		palabra = hash_iter_ver_actual(iter);
-		size_t * cont = (size_t*) hash_obtener(hash,palabra);
+	/* Desencolo la palabra y la busco en el hash para obtener el cont */
+	while(!cola_esta_vacia(cola)){
+		char * palabra = cola_desencolar(cola);
+		cont = hash_obtener(hash,palabra);
 		printf("%d %s\n",*cont,palabra);
-		hash_iter_avanzar(iter);
+		free(cont);
+		free(palabra);
 	}
-	hash_iter_destruir(iter);
+	cola_destruir(cola,NULL);
     hash_destruir(hash);
     free(linea);
-    free_strv(arreglo);
+    fclose(arch);
     return 0;
-}		
-			
-    
+}
