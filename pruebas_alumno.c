@@ -4,7 +4,7 @@
 #include <string.h>
 #include "abb.h"
 #include "testing.h"
- 
+
 /* Pruebas para un abb vacio */
 static void pruebas_abb_vacio()
 {
@@ -423,12 +423,18 @@ static void pruebas_abb_iter_in_interno()
     print_test("guardar Avion-60", abb_guardar(abb, s[10], datos+11));
     print_test("guardar Elefante-65", abb_guardar(abb, s[11], datos+12));
     
+    /* Pruebas para el abb_obtener_item */
+    printf("PRUEBO LA FUNCION ABB_OBTENER_ITEM");
     abb_item_t * items = abb_obtener_items(abb);
-    printf("primera clave = %s\n", items[0].clave);
-    printf("segunda clave = %s\n", items[1].clave);
-    printf("tercera clave = %s\n", items[2].clave);
-    printf("cuarta clave = %s\n", items[3].clave);
-    printf("quinta clave = %s\n", items[4].clave);
+    print_test("primera clave es Aereo", strcmp(items[0].clave,s[3])==0);
+    print_test("Valor de la primera clave es 25", datos[3]==*(int*)items[0].valor);
+    print_test("Segunda clave es Avion", strcmp(items[1].clave,s[10])==0);
+    print_test("Valor de la segunda clave es 60", datos[11]==*(int*)items[1].valor);
+    print_test("tercera clave es Barco", strcmp(items[2].clave,s[8])==0);
+    print_test("Valor de la tercera clave es 50", datos[8]==*(int*)items[2].valor);
+    print_test("cuarta clave es Bazar", strcmp(items[3].clave,s[1])==0);
+    print_test("Valor de la cuarta clave 15", datos[1]==*(int*)items[3].valor);
+    print_test("quinta clave es Casa", strcmp(items[4].clave,s[7])==0);
     free(items);
 
     /* Recorro los nodos en in-orden y se chequea su clave */
